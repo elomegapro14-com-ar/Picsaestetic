@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Selfie Light App - Modos de Calidad</title>
+    
+    <meta name="theme-color" id="themeMeta" content="#cbeeff">
+    
+    <style>
+        html { 
+            background-color: #cbeeff; 
+            transition: background-color 0.2s ease; 
+            height: -webkit-fill-available; 
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        }
+
+        body {
+            width: 100vw; 
+            height: 100dvh; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: space-between; 
+            background-color: #cbeeff; 
+            transition: background-color 0.2s ease;
+            padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)) 20px;
+        }
+
+        .camera-container { 
+            width: 85%; 
+            max-width: 320px; 
+            aspect-ratio: 3 / 4; 
+            border-radius: 24px; 
+            overflow: hidden; 
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); 
+            background-color: #000;
+            position: relative;
+        }
+
+        video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transform: scaleX(-1); 
+        }
+
+        .flip-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        /* Selector de Modo (Normal vs Pro) */
+        .mode-selector-container {
+            margin-top: -5px;
+            z-index: 10;
+        }
+
+        .mode-btn {
+            background-color: rgba(25, 27, 31, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .mode-btn.pro-active {
+            background-color: #ffffff;
+            color: #1e1f22;
+            border-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(255,255,255,0.3);
+        }
+
+        .capture-btn-container {
+            z-index: 10;
+            margin-bottom: 5px;
+        }
+
+        .capture-btn { 
+            width: 70px; 
+            height: 70px; 
+            border-radius: 50%; 
+            background-color: white; 
+            border: 5px solid rgba(255, 255, 255, 0.4); 
+            cursor: pointer; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+            transition: transform 0.1s; 
+        }
+
+        .capture-btn:active { 
+            transform: scale(0.9); 
+        }
+
+        .bottom-panel { 
+            width: 100%; 
+            max-width: 420px; 
+            background-color: rgba(25, 27, 31, 0.88); 
+            backdrop-filter: blur(15px); 
+            -webkit-backdrop-filter: blur(15px); 
+            border-radius: 24px; 
+            padding: 16px 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.15); 
+            z-index: 10; 
+        }
+
+        .panel-menu { 
+            display: flex; 
+            justify-content: space-around; 
+            color: rgba(255, 255, 255, 0.5); 
+            font-size: 13px; 
+            font-weight: 600; 
+        }
+
+        .menu-item.active { 
+            color: white; 
+            border-bottom: 2px solid white; 
+            padding-bottom: 2px; 
+        }
+
+        .color-carousel { 
+            display: flex; 
+            gap: 10px; 
+            overflow-x: auto; 
+            padding: 4px 0; 
+            scrollbar-width: none; 
+        }
+
+        .color-carousel::-webkit-scrollbar { 
+            display: none; 
+        }
+
+        .color-option { 
+            width: 46px; 
+            height: 46px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            flex-shrink: 0; 
+            border: 2px solid transparent; 
+            transition: transform 0.2s; 
+        }
+
+        .color-option.active { 
+            border: 2px solid white; 
+            transform: scale(1.08); 
+        }
+
+        .color-picker-wrapper { 
+            position: relative; 
+            width: 46px; 
+            height: 46px; 
+            border-radius: 12px; 
+            background: linear-gradient(45deg, red, yellow, green, cyan, blue, magenta, red); 
+            overflow: hidden; 
+            flex-shrink: 0; 
+            border: 2px solid transparent; 
+        }
+        
+        .color-picker-wrapper.active { 
+            border: 2px solid white; 
+        }
+
+        .color-picker-wrapper input[type="color"] { 
+            position: absolute; 
+            top: -10px; 
+            left: -10px; 
+            width: 70px; 
+            height: 70px; 
+            cursor: pointer; 
+            opacity: 0; 
+        }
+        
+        canvas { 
+            display: none; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="camera-container">
+        <button class="flip-btn" onclick="toggleCamera()">🔄</button>
+        <video id="webcam" autoplay playsinline></video>
+    </div>
+
+    <div class="mode-selector-container">
+        <button class="mode-btn" id="modeToggle" onclick="toggleQualityMode()">MODO: NORMAL</button>
+    </div>
+
+    <div class="capture-btn-container">
+        <button class="capture-btn" id="snap"></button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="bottom-panel">
+        <div class="panel-menu">
+            <span class="menu-item active">● Vibe</span>
+            <span class="menu-item">♡ Luz</span>
+            <span class="menu-item">✦ Filtro</span>
+        </div>
+        <div class="color-carousel">
+            <div class="color-picker-wrapper" id="pickerWrapper">
+                <input type="color" id="customColorPicker" value="#cbeeff">
+            </div>
+            <div class="color-option" style="background-color: #00bfff;" onclick="changeColor('#00bfff', this)"></div>
+            <div class="color-option active" style="background-color: #cbeeff;" onclick="changeColor('#cbeeff', this)"></div>
+            <div class="color-option" style="background-color: #e6bcf0;" onclick="changeColor('#e6bcf0', this)"></div>
+            <div class="color-option" style="background-color: #df00ff;" onclick="changeColor('#df00ff', this)"></div>
+            <div class="color-option" style="background-color: #3b00db;" onclick="changeColor('#3b00db', this)"></div>
+            <div class="color-option" style="background-color: #ffb6c1;" onclick="changeColor('#ffb6c1', this)"></div>
+            <div class="color-option" style="background-color: #ffffff;" onclick="changeColor('#ffffff', this)"></div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const customColorPicker = document.getElementById('customColorPicker');
+        const pickerWrapper = document.getElementById('pickerWrapper');
+        const themeMeta = document.getElementById('themeMeta');
+        const modeToggleBtn = document.getElementById('modeToggle');
+
+        let currentStream = null;
+        let currentFacingMode = "user"; 
+        
+        // Control de calidad: 'normal' (baja/comprimida) o 'pro' (alta resolución del sensor)
+        let qualityMode = "normal"; 
+
+        async function initCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            // Configuramos las restricciones según el modo activo
+            const constraints = {
+                video: {
+                    facingMode: currentFacingMode === "user" ? { ideal: "user" } : { ideal: "environment" },
+                    // Si está en PRO pide máxima resolución, si está en NORMAL usa una básica estándar
+                    width: qualityMode === "pro" ? { ideal: 3840 } : { ideal: 640 },
+                    height: qualityMode === "pro" ? { ideal: 2160 } : { ideal: 480 }
+                },
+                audio: false
+            };
+
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = currentStream;
+            } catch (err) {
+                console.error("Error al iniciar cámara, intentando fallback...", err);
+                try {
+                    currentStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    video.srcObject = currentStream;
+                } catch (fallbackErr) {
+                    alert("Error crítico de acceso a la cámara.");
+                }
+            }
+        }
+
+        // Cambiar entre Modo Normal y Modo Pro
+        function toggleQualityMode() {
+            if (qualityMode === "normal") {
+                qualityMode = "pro";
+                modeToggleBtn.textContent = "MODO: PRO (HD)";
+                modeToggleBtn.classList.add('pro-active');
+            } else {
+                qualityMode = "normal";
+                modeToggleBtn.textContent = "MODO: NORMAL";
+                modeToggleBtn.classList.remove('pro-active');
+            }
+            // Reiniciamos el stream para aplicar la nueva calidad de entrada
+            initCamera();
+        }
+
+        function toggleCamera() {
+            currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
+            video.style.transform = (currentFacingMode === "user") ? "scaleX(-1)" : "scaleX(1)";
+            initCamera();
+        }
+
+        function changeColor(color, element) {
+            document.documentElement.style.backgroundColor = color;
+            document.body.style.backgroundColor = color;
+            themeMeta.setAttribute('content', color);
+            
+            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+            pickerWrapper.classList.remove('active');
+            
+            if (element) element.classList.add('active'); else pickerWrapper.classList.add('active');
+        }
+
+        customColorPicker.addEventListener('input', (e) => { changeColor(e.target.value, null); });
+
+        document.getElementById('snap').addEventListener('click', () => {
+            const currentBg = document.body.style.backgroundColor;
+            changeColor('#ffffff', null);
+
+            const ctx = canvas.getContext('2d');
+            
+            if (qualityMode === "pro") {
+                // MODO PRO: Extrae los píxeles reales nativos del sensor
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            } else {
+                // MODO NORMAL (Viejo): Forzamos una compresión basada en el tamaño del contenedor visual
+                canvas.width = video.clientWidth;
+                canvas.height = video.clientHeight;
+            }
+            
+            if (currentFacingMode === "user") {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+            
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Ajustamos la calidad del archivo resultante
+            const compressionQuality = qualityMode === "pro" ? 1.0 : 0.4;
+            const dataUrl = canvas.toDataURL('image/jpeg', compressionQuality);
+            
+            const link = document.createElement('a');
+            link.download = `selfie_${qualityMode}_${Date.now()}.jpg`;
+            link.href = dataUrl;
+            link.click();
+
+            setTimeout(() => { changeColor(currentBg, null); }, 120);
+        });
+
+        initCamera();
+    </script>
+</body>
+</html>
